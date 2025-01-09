@@ -5,8 +5,10 @@
     queue        dw QUEUE_SIZE dup(?)
     head         dw 0
     tail         dw 0
-    buffer db 7 dup('$')   ; Буфер для строки (6 символов + '$')
-    ten dw 10              ; Константа для деления на 10
+    count        dw 0                ; Счетчик элементов в очереди
+    buffer db 7 dup('$')             ; Буфер для строки (6 символов + '$')
+    ten dw 10                        ; Константа для деления на 10
+    empty_msg db 'The queue is empty', 0Dh, 0Ah, '$'
 .code
 main:
     ; Инициализация сегментов
@@ -30,7 +32,6 @@ main:
 
     ; Извлечение элементов из очереди
     call dequeue
-    ; элемент теперь в ax, далее можно использовать для вывода
     call print_number
 
     call dequeue
@@ -47,6 +48,9 @@ main:
     
     call dequeue
     call print_number
+
+    call dequeue  ; Попытка извлечения из пустой очереди
+    call dequeue  ; Попытка извлечения из пустой очереди
 
     ; Завершение программы
     mov ax, 4C00h
@@ -57,6 +61,11 @@ enqueue proc
     push ax
     push bx
     push si
+
+    ; Проверка на переполнение очереди
+    mov ax, count
+    cmp ax, QUEUE_SIZE
+    je queue_full
 
     mov bx, tail
     shl bx, 1               ; Умножаем индекс на 2 (размер слова)
@@ -72,6 +81,10 @@ enqueue proc
 skip_reset_tail:
     mov tail, bx
 
+    ; Увеличение счетчика элементов
+    inc count
+
+queue_full:
     pop si
     pop bx
     pop ax
@@ -82,6 +95,11 @@ enqueue endp
 dequeue proc
     push bx
     push si
+
+    ; Проверка на пустоту очереди
+    mov ax, count
+    cmp ax, 0
+    je queue_empty
 
     mov bx, head
     shl bx, 1               ; Умножаем индекс на 2 (размер слова)
@@ -97,8 +115,22 @@ dequeue proc
 skip_reset_head:
     mov head, bx
 
+    ; Уменьшение счетчика элементов
+    dec count
+
     pop si
     pop bx
+    ret
+
+queue_empty:
+    ; Печать сообщения о пустой очереди
+    lea dx, empty_msg
+    mov ah, 09h
+    int 21h
+
+    pop si
+    pop bx
+    xor ax, ax  ; Возвращаем 0 в ax
     ret
 dequeue endp
 
