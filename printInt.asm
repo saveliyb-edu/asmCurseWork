@@ -13,12 +13,12 @@ main proc
     mov ax, 1
     call print_number
 
-    ; Число 12
-    mov ax, 12
+    ; Число 32
+    mov ax, 32
     call print_number
 
-    ; Число 1234
-    mov ax, 1234
+    ; Число 5678
+    mov ax, 5678
     call print_number
 
     ; Число -1234
@@ -28,7 +28,8 @@ main proc
     ; Число 0
     mov ax, 0
     call print_number
-    
+
+    ; Число 50
     mov ax, 50
     call print_number
 
@@ -47,8 +48,7 @@ print_number proc
 
     ; Обработка отрицательного числа
     neg ax                   ; Преобразование числа в положительное
-    mov byte ptr [buffer], '-' ; Запись '-' в начало буфера
-    lea di, buffer + 6       ; Сброс указателя на конец буфера
+    mov byte ptr [di-1], '-' ; Запись '-' в буфер
     dec di                   ; Сдвиг указателя на одну позицию влево
 
 convert_start:
@@ -58,8 +58,8 @@ convert_loop:
     xor dx, dx               ; Очистка DX перед делением
     div ten                  ; AX / 10, результат в AX, остаток в DX
     add dl, '0'              ; Преобразование остатка в ASCII-символ
+    mov [di-1], dl           ; Запись символа в буфер
     dec di                   ; Сдвиг указателя на одну позицию влево
-    mov [di], dl             ; Запись символа в буфер
     inc cx                   ; Увеличение счетчика символов
     cmp ax, 0                ; Проверка, все ли цифры обработаны
     jne convert_loop         ; Если нет, продолжение цикла
@@ -67,11 +67,11 @@ convert_loop:
     ; Обработка вывода строки
     lea dx, buffer + 6       ; Указатель на конец буфера
     sub dx, cx               ; Сдвиг указателя на начало числа
-    
+
     ; Проверка на наличие знака '-'
-    cmp byte ptr [buffer], '-'
+    cmp byte ptr [di], '-'
     jne skip_minus
-    lea dx, buffer           ; Указатель на начало строки, если есть '-'
+    lea dx, buffer + 6 - cx - 1 ; Указатель на начало строки, если есть '-'
 
 skip_minus:
     ; Вывод строки на экран
