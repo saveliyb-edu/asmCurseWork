@@ -69,7 +69,7 @@ convert_loop:
     sub dx, cx               ; Сдвиг указателя на начало числа
 
     ; Проверка на наличие знака '-'
-    cmp byte ptr [di-1], '-'
+    cmp byte ptr [buffer], '-'
     jne skip_minus
     dec dx                   ; Указатель на начало строки, если есть '-'
 
