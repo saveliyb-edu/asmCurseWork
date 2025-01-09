@@ -1,14 +1,12 @@
 .model small
 .stack 100h
-
 .data
-QUEUE_SIZE   equ 10
-queue        db QUEUE_SIZE dup(?)
-head         dw 0
-tail         dw 0
-buffer db 7 dup('$')   ; Буфер для строки (6 символов + '$')
-ten dw 10              ; Константа для деления на 10
-
+    QUEUE_SIZE   equ 10
+    queue        dw QUEUE_SIZE dup(?)
+    head         dw 0
+    tail         dw 0
+    buffer db 7 dup('$')   ; Буфер для строки (6 символов + '$')
+    ten dw 10              ; Константа для деления на 10
 .code
 main:
     ; Инициализация сегментов
@@ -17,17 +15,17 @@ main:
     mov es, ax
 
     ; Добавление элементов в очередь
-    mov al, 1
+    mov ax, 1
     call enqueue
-    mov al, 32
+    mov ax, 32
     call enqueue
-    mov al, 5678
+    mov ax, 5678
     call enqueue
-    mov al, -1234
+    mov ax, -1234
     call enqueue
-    mov al, 0
+    mov ax, 0
     call enqueue
-    mov al, 50
+    mov ax, 50
     call enqueue
 
     ; Извлечение элементов из очереди
@@ -58,9 +56,14 @@ main:
 enqueue proc
     push ax
     push bx
+    push si
 
     mov bx, tail
-    mov queue[bx], al
+    shl bx, 1               ; Умножаем индекс на 2 (размер слова)
+    lea si, queue[bx]
+    mov [si], ax
+
+    mov bx, tail
     inc bx
     cmp bx, QUEUE_SIZE
     jne skip_reset_tail
@@ -69,6 +72,7 @@ enqueue proc
 skip_reset_tail:
     mov tail, bx
 
+    pop si
     pop bx
     pop ax
     ret
@@ -77,9 +81,14 @@ enqueue endp
 ; Процедура выборки очередного элемента из очереди (со сдвигом очереди)
 dequeue proc
     push bx
+    push si
 
     mov bx, head
-    mov al, queue[bx]
+    shl bx, 1               ; Умножаем индекс на 2 (размер слова)
+    lea si, queue[bx]
+    mov ax, [si]
+
+    mov bx, head
     inc bx
     cmp bx, QUEUE_SIZE
     jne skip_reset_head
@@ -88,9 +97,7 @@ dequeue proc
 skip_reset_head:
     mov head, bx
 
-    ; Сохранение элемента в ax для дальнейшего использования
-    mov ah, 0
-
+    pop si
     pop bx
     ret
 dequeue endp
@@ -147,6 +154,4 @@ skip_minus:
 
     ret
 print_number endp
-end main
-
 end main
