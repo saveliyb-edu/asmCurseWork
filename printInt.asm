@@ -1,38 +1,86 @@
 .model small
 .stack 100h
+
 .data
-    buffer db 7 dup('$')   ; Буфер для строки (6 символов + '$')
-    ten dw 10              ; Константа для деления на 10
+QUEUE_SIZE   equ 10
+queue        db QUEUE_SIZE dup(0)
+head         dw 0
+tail         dw 0
+buffer db 7 dup('$')   ; Буфер для строки (6 символов + '$')
+ten dw 10              ; Константа для деления на 10
+
+msg db 'Element: $'
+
 .code
-main proc
+main:
+    ; Инициализация сегментов
     mov ax, @data
     mov ds, ax
+    mov es, ax
 
-    ; Загрузка и вывод чисел
-    ; Число 1
-    mov ax, 1
+    ; Добавление элементов в очередь
+    mov al, 100
+    call enqueue
+    mov al, -1234
+    call enqueue
+    mov al, 332
+    call enqueue
+
+    ; Извлечение элементов из очереди
+    call dequeue
+    ; элемент теперь в ax, далее можно использовать для вывода
     call print_number
 
-    ; Число 12
-    mov ax, 12
+    call dequeue
     call print_number
 
-    ; Число 1234
-    mov ax, 1234
-    call print_number
-
-    ; Число -4321
-    mov ax, -4321
-    call print_number
-
-    ; Число 0
-    mov ax, 0
+    call dequeue
     call print_number
 
     ; Завершение программы
     mov ax, 4C00h
     int 21h
-main endp
+
+; Процедура добавления нового элемента в очередь
+enqueue proc
+    push ax
+    push bx
+
+    mov bx, tail
+    mov queue[bx], al
+    inc bx
+    cmp bx, QUEUE_SIZE
+    jne skip_reset_tail
+    mov bx, 0
+
+skip_reset_tail:
+    mov tail, bx
+
+    pop bx
+    pop ax
+    ret
+enqueue endp
+
+; Процедура выборки очередного элемента из очереди (со сдвигом очереди)
+dequeue proc
+    push bx
+
+    mov bx, head
+    mov al, queue[bx]
+    inc bx
+    cmp bx, QUEUE_SIZE
+    jne skip_reset_head
+    mov bx, 0
+
+skip_reset_head:
+    mov head, bx
+
+    ; Сохранение элемента в ax для дальнейшего использования
+    mov ah, 0
+
+    pop bx
+    ret
+dequeue endp
 
 print_number proc
     ; Установка указателя на конец буфера
@@ -86,4 +134,6 @@ skip_minus:
 
     ret
 print_number endp
+end main
+
 end main
