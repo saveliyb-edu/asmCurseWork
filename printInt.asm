@@ -23,8 +23,6 @@ main:
     call enqueue
     mov al, 5678
     call enqueue
-    mov al, 5678
-    call enqueue
     mov al, -1234
     call enqueue
     mov al, 0
