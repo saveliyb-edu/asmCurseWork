@@ -28,6 +28,9 @@ main proc
     ; Число 0
     mov ax, 0
     call print_number
+    
+    mov ax, 50
+    call print_number
 
     ; Завершение программы
     mov ax, 4C00h
