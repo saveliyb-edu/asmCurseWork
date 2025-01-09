@@ -1,131 +1,81 @@
 .model small
 .stack 100h
-
 .data
-QUEUE_SIZE   equ 10
-queue        db QUEUE_SIZE dup(0)
-head         dw 0
-tail         dw 0
-buffer db 7 dup('$')   ; Буфер для строки (6 символов + '$')
-ten dw 10              ; Константа для деления на 10
-
-msg db 'Element: $'
-
+    buffer db 7 dup('$')   ; Буфер для строки (6 символов + '$')
+    ten dw 10              ; Константа для деления на 10
 .code
-main:
-    ; Инициализация сегментов
+main proc
     mov ax, @data
     mov ds, ax
-    mov es, ax
 
-    ; Добавление элементов в очередь
-    mov al, 100
-    call enqueue
-    mov al, -1234
-    call enqueue
-    mov al, 332
-    call enqueue
-
-    ; Извлечение элементов из очереди
-    call dequeue
-    ; элемент теперь в ax, далее можно использовать для вывода
+    ; Примеры чисел для вывода
+    ; Число 1
+    mov ax, 1
     call print_number
 
-    call dequeue
+    ; Число 12
+    mov ax, 12
     call print_number
 
-    call dequeue
+    ; Число 1234
+    mov ax, 1234
+    call print_number
+
+    ; Число -1234
+    mov ax, -1234
+    call print_number
+
+    ; Число 0
+    mov ax, 0
     call print_number
 
     ; Завершение программы
     mov ax, 4C00h
     int 21h
-
-; Процедура добавления нового элемента в очередь
-enqueue proc
-    push ax
-    push bx
-
-    mov bx, tail
-    mov queue[bx], al
-    inc bx
-    cmp bx, QUEUE_SIZE
-    jne skip_reset_tail
-    mov bx, 0
-
-skip_reset_tail:
-    mov tail, bx
-
-    pop bx
-    pop ax
-    ret
-enqueue endp
-
-; Процедура выборки очередного элемента из очереди (со сдвигом очереди)
-dequeue proc
-    push bx
-
-    mov bx, head
-    mov al, queue[bx]
-    inc bx
-    cmp bx, QUEUE_SIZE
-    jne skip_reset_head
-    mov bx, 0
-
-skip_reset_head:
-    mov head, bx
-
-    ; Сохранение элемента в ax для дальнейшего использования
-    mov ah, 0
-
-    pop bx
-    ret
-dequeue endp
+main endp
 
 print_number proc
-    ; Установка указателя на конец буфера
-    lea di, buffer + 6       ; Указатель на конец буфера (последний символ '$')
+    ; Инициализация указателя на конец буфера
+    lea di, buffer + 6       ; Указатель на конец буфера (исключая символ '$')
 
-    ; Инициализация флага знака
-    mov bl, 0                ; Флаг знака (0 - положительное, 1 - отрицательное)
-
-    ; Проверка числа на знак
+    ; Проверка числа на 0
     cmp ax, 0
-    jge convert_start        ; Если число >= 0, переходим к конвертации
+    jge convert_start        ; Если число >= 0, переход к преобразованию
 
     ; Обработка отрицательного числа
-    neg ax                   ; Делаем число положительным
-    mov bl, 1                ; Устанавливаем флаг знака
+    neg ax                   ; Преобразование числа в положительное
+    mov byte ptr [buffer], '-' ; Запись '-' в начало буфера
+    lea di, buffer + 6       ; Сброс указателя на конец буфера
+    dec di                   ; Сдвиг указателя на одну позицию влево
 
 convert_start:
-    mov cx, 0                ; Счетчик символов
+    mov cx, 0                ; Сброс счетчика символов
 
 convert_loop:
-    xor dx, dx               ; Очищаем DX перед делением
+    xor dx, dx               ; Очистка DX перед делением
     div ten                  ; AX / 10, результат в AX, остаток в DX
-    add dl, '0'              ; Преобразуем остаток в ASCII-символ
-    dec di                   ; Переходим к следующей позиции
-    mov [di], dl             ; Сохраняем символ в буфер
-    inc cx                   ; Увеличиваем счетчик символов
-    cmp ax, 0                ; Проверяем, все ли цифры обработаны
-    jne convert_loop         ; Если нет, продолжаем
+    add dl, '0'              ; Преобразование остатка в ASCII-символ
+    dec di                   ; Сдвиг указателя на одну позицию влево
+    mov [di], dl             ; Запись символа в буфер
+    inc cx                   ; Увеличение счетчика символов
+    cmp ax, 0                ; Проверка, все ли цифры обработаны
+    jne convert_loop         ; Если нет, продолжение цикла
 
-    ; Настраиваем указатель для вывода строки
-    lea dx, buffer + 6       ; Указываем на конец буфера
-    sub dx, cx               ; Смещаем указатель к началу цифр
-
-    ; Если число отрицательное, включаем знак '-'
-    cmp bl, 0
-    je skip_minus
-    mov byte ptr [di-1], '-' ; Записываем '-' перед числом
-    dec dx                   ; Сдвигаем указатель на знак '-'
+    ; Обработка вывода строки
+    lea dx, buffer + 6       ; Указатель на конец буфера
+    sub dx, cx               ; Сдвиг указателя на начало числа
+    
+    ; Проверка на наличие знака '-'
+    cmp byte ptr [buffer], '-'
+    jne skip_minus
+    lea dx, buffer           ; Указатель на начало строки, если есть '-'
 
 skip_minus:
     ; Вывод строки на экран
     mov ah, 09h
     int 21h
 
-    ; Перевод строки для следующего числа
+    ; Печать символов новой строки и возврата каретки
     mov ah, 02h
     mov dl, 0Dh              ; Символ возврата каретки
     int 21h
@@ -134,6 +84,4 @@ skip_minus:
 
     ret
 print_number endp
-end main
-
 end main
