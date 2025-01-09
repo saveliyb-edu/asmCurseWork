@@ -50,6 +50,8 @@ print_number proc
     neg ax                   ; Преобразование числа в положительное
     mov byte ptr [di-1], '-' ; Запись '-' в буфер
     dec di                   ; Сдвиг указателя на одну позицию влево
+    mov bx, 1                ; Установка флага отрицательного числа
+    jmp convert_start
 
 convert_start:
     mov cx, 0                ; Сброс счетчика символов
@@ -69,9 +71,10 @@ convert_loop:
     sub dx, cx               ; Сдвиг указателя на начало числа
 
     ; Проверка на наличие знака '-'
-    cmp byte ptr [buffer], '-'
+    cmp bx, 1
     jne skip_minus
     dec dx                   ; Указатель на начало строки, если есть '-'
+    mov byte ptr [dx], '-'   ; Запись '-' в начало строки
 
 skip_minus:
     ; Вывод строки на экран
