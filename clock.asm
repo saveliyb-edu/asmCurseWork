@@ -2,13 +2,11 @@
 .stack 100h
 .data
     msg1 db 'Secund do gudka: $'
-    str db 5,7 dup (0) ;с клавиатуры
+    input_str db 5,7 dup (0) ;с клавиатуры
     max dw 0
     min dw 0
-    num_18
-    dw 18
-    num_60
-    dw 60
+    num_18 dw 18
+    num_60 dw 60
 .code
 .386
 start:
@@ -20,9 +18,9 @@ start:
     lea dx,msg1
     int 21h
     mov ah,0ah          ;с клавиатуры
-    lea dx,str
+    lea dx,input_str
     int 21h
-    lea si,str[2]
+    lea si,input_str[2]
     call string_to_int
     test ax,ax
     jz exit
@@ -54,20 +52,24 @@ del:
     div num_18
     cwd
     div num_60          ;в dx - минуты в ax - секунды
-    push ax dx
+    push ax
+    push dx
     mov ah,2            ;установка курсора
     mov bh,0
     mov dh,0
     mov dl,25
     int 10h
-    pop dx ax
+    pop dx
+    pop ax
     ;cmp ax,10
     ;jnc min1
-    push ax dx
+    push ax
+    push dx
     mov dl,'0'
     mov ah,2
     int 21h
-    pop dx ax
+    pop dx
+    pop ax
 min1:
     call ost_min
     push dx
