@@ -9,6 +9,7 @@
     buffer db 7 dup('$')             ; Буфер для строки (6 символов + '$')
     ten dw 10                        ; Константа для деления на 10
     empty_msg db 'The queue is empty', 0Dh, 0Ah, '$'
+    full_msg  db 'The queue is full', 0Dh, 0Ah, '$'
 .code
 main:
     ; Инициализация сегментов
@@ -29,6 +30,16 @@ main:
     call enqueue
     mov ax, 50
     call enqueue
+    mov ax, 51
+    call enqueue
+    mov ax, 52
+    call enqueue
+    mov ax, 53
+    call enqueue
+    mov ax, 54
+    call enqueue
+    mov ax, 55
+    call enqueue
 
     ; Извлечение элементов из очереди
     call dequeue
@@ -37,6 +48,18 @@ main:
     call dequeue
     call print_number
 
+    call dequeue
+    call print_number
+    
+    call dequeue
+    call print_number
+    
+    call dequeue
+    call print_number
+    
+    call dequeue
+    call print_number
+    
     call dequeue
     call print_number
     
@@ -61,10 +84,11 @@ enqueue proc
     push ax
     push bx
     push si
+    push cx
 
     ; Проверка на переполнение очереди
-    mov ax, count
-    cmp ax, QUEUE_SIZE
+    mov cx, count
+    cmp cx, QUEUE_SIZE
     je queue_full
 
     mov bx, tail
@@ -84,7 +108,16 @@ skip_reset_tail:
     ; Увеличение счетчика элементов
     inc count
 
+    jmp end_enqueue
+
 queue_full:
+    ; Печать сообщения о переполнении очереди
+    lea dx, full_msg
+    mov ah, 09h
+    int 21h
+
+end_enqueue:
+    pop cx
     pop si
     pop bx
     pop ax
