@@ -99,9 +99,27 @@ exit:
     mov ax,4c00h
     int 21h
 Sound1 proc near
-    MOV AH,2 ;функция вывода символа на экран
-    MOV DL,7 ;посылаем код ASCII 7
-    INT 21H ;динамик гудит
+    ; Установка делителя таймера
+    mov al,0B6h    ; Команда для канала 2, режим 3
+    out 43h,al
+    ; Установка частоты
+    mov al,0B4h    ; Младший байт делителя (пример: 0B4h)
+    out 42h,al
+    mov al,0E8h    ; Старший байт делителя (пример: 0E8h)
+    out 42h,al
+    ; Включение звука
+    in al,61h
+    or al,3
+    out 61h,al
+    ; Задержка
+    mov cx,0FFFFh
+delay:
+    loop delay
+    ; Выключение звука
+    in al,61h
+    and al,0FCh
+    out 61h,al
+    ret
 Sound1 endp
 string_to_int proc
     ;Преобразование строки в число
